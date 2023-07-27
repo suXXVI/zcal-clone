@@ -1,14 +1,25 @@
-import { useEffect } from "react";
+import { useContext, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchMeetingById } from "../features/meetingsSlice";
 import { Container } from "react-bootstrap";
+import { AuthContext } from "../components/AuthProvider";
 
 
 export default function BookMeetingPage() {
     const { meetingId } = useParams();
     const dispatch = useDispatch();
+    const navigate = useNavigate();
     const meeting = useSelector(state => state.meeting.meeting);
+    const {currentUser} = useContext(AuthContext);
+
+
+    //Log user out
+    useEffect(() => {
+        if(!currentUser){
+        navigate('/login');
+        }
+    },[currentUser])
 
     console.log(meetingId)
     useEffect(() => {
