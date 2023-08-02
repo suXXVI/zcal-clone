@@ -26,7 +26,7 @@ function AvailabilityForm() {
 
   //Load the date within user specified range
   useEffect(() => {
-    if (meeting.date_range) {
+    if (meeting.date_range && meeting.meeting_name) {
       const dates = eachDayOfInterval({
         start: new Date(),
         end: new Date(new Date().getTime() + meeting.date_range * 24 * 60 * 60 * 1000)
@@ -154,8 +154,7 @@ function AvailabilityForm() {
   if (postMeetingData.fulfilled.match(response)) {
     const meetingId = response.payload.meeting_id; // replace this with the actual ID of the created meeting
     navigate(`/success/${meetingId}`);
-    dispatch(resetMeeting());
-    dispatch(resetAvailability());
+
   }
 };
 
@@ -164,10 +163,10 @@ function AvailabilityForm() {
         <Form onSubmit={handleSubmit}>
         <Table striped bordered hover>
             <thead>
-            <tr>
-                <th>Date</th>
-                <th>Start Time - End Time</th>
-            </tr>
+                <tr>
+                  <th>Date</th>
+                  <th>Start Time - End Time</th>
+                </tr>
             </thead>
             <tbody>
               {availability.map((dateAvailability, dateIndex) => (
@@ -182,6 +181,11 @@ function AvailabilityForm() {
                   </td>
                 </tr>
               ))}
+              {!meeting.meeting_name && (
+                <tr>
+                  <td colSpan={2}>Click back to create a meeting before setting availability timeslot</td>
+                </tr>
+              )}
             </tbody>
         </Table>
         
@@ -240,12 +244,16 @@ function AvailabilityForm() {
           </Modal.Footer>
         </Modal>
 
+        
         <Button variant='primary' onClick={handleBack} className='me-2 px-3'>
             Back
         </Button>
-        <Button variant="success" type="submit">
+        {meeting.meeting_name && (
+          <Button variant="success" type="submit">
             Submit
-        </Button>
+          </Button>
+        )}
+        
         </Form>
     </Container>
   );

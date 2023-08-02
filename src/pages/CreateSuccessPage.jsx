@@ -1,9 +1,18 @@
+import { useEffect } from 'react';
 import { Container } from 'react-bootstrap';
 import { useParams } from 'react-router-dom';
+import { resetMeeting } from '../features/meetingsSlice';
+import { resetAvailability } from '../features/availabilitySlice';
+import { useDispatch } from 'react-redux';
 
 function CreateSuccessPage() {
   const { meetingId } = useParams();
-//   fetchMeetingById , dispatch
+  const dispatch = useDispatch();
+  
+  useEffect(() => {
+    dispatch(resetMeeting());
+    dispatch(resetAvailability());
+  })
 
   return (
     <Container>

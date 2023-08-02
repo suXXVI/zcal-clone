@@ -26,6 +26,10 @@ export default function Home() {
     //Get meeting details from redux store
     const allMeetings = useSelector(state => state.meeting.allMeetings);
     const loading = useSelector(state => state.meeting.loading)
+
+    const handleCreateMeeting = () => {
+        navigate('/meeting')
+    }
     
     return (
         <>
@@ -36,7 +40,7 @@ export default function Home() {
                     </Col>
 
                     <Col xs={5} className="d-flex align-items-center justify-content-end">
-                        <Button variant="primary" >+ New Link</Button>
+                        <Button variant="primary" onClick={handleCreateMeeting}>+ New Link</Button>
                     </Col>
                 </Row>  
 

@@ -110,14 +110,14 @@ const meetingSlice = createSlice({
     resetMeeting: (state) => {
       state.meeting = {
         meeting_name: '',
-        location: '',
+        location: 'zoom',
         description: '',
         custom_url: '',
         cover_photo: '',
-        event_duration: '',
-        time_slot_increment: '',
-        date_range: '',
-        reminder_days: '',
+        event_duration: '30',
+        time_slot_increment: '30',
+        date_range: '7',
+        reminder_days: '1',
         user_uid: '',
       };
     },
