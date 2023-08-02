@@ -46,6 +46,49 @@ export const postMeetingData = createAsyncThunk(
   }
 );
 
+//Async thunk to update both 'meetings' and 'availability' data
+export const updateMeetingData = createAsyncThunk(
+  'meeting/updateMeetingData',
+  async ({ id, meetingData }, thunkAPI) => {
+    try {
+      let imageURL = "";
+
+      if (meetingData.meeting.cover_photo) {
+        const imageRef = ref(storage, `meetings/${meetingData.meeting.cover_photo.name}`);
+        const response = await uploadBytes(imageRef, meetingData.meeting.cover_photo);
+        imageURL = await getDownloadURL(response.ref);
+      }
+
+      // Flatten the availability data structure and filter out dates without timeslots
+      const flattenedAvailability = meetingData.availability.flatMap(date => (
+        date.slots.map(slot => ({
+          date: date.date,
+          start_time: slot.start_time || null, // Set to null if not provided
+          end_time: slot.end_time || null, // Set to null if not provided
+          repeats: slot.repeats,
+        }))
+      )).filter(slot => slot.start_time && slot.end_time); // Only include slots with both start_time and end_time
+
+      const response = await axios.put(`https://capstone-project-api.chungmangjie200.repl.co/meetings/${id}`, {
+        ...meetingData,
+        meeting: {
+          ...meetingData.meeting,
+          cover_photo: imageURL,
+        },
+        availability: flattenedAvailability,
+      });
+
+      // Remove the File object from the state
+      thunkAPI.dispatch(saveMeeting({ ...meetingData.meeting, cover_photo: imageURL }));
+
+      return response.data;
+    } catch (error) {
+      return thunkAPI.rejectWithValue({ error: error.message });
+    }
+  }
+);
+
+
 
 //Async thunk to fetch meeting ID
 export const fetchMeetingById = createAsyncThunk(
@@ -141,6 +184,10 @@ const meetingSlice = createSlice({
         const meetingId = action.payload
 
         state.allMeetings = state.allMeetings.filter((meeting) => meeting.id !== meetingId)
+      })
+      .addCase(updateMeetingData.fulfilled, (state, action) => {
+        state.status = 'succeeded';
+        // Add any other state changes you need on success
       })
   }
 });
