@@ -43,8 +43,13 @@ const MeetingForm = () => {
         convertedValue = number * 30; // Approximate, actual number of days in a month can vary
       }
     }
+
+    //Convert reminder days to integer
+    if (name === 'reminder_days'){
+      convertedValue = parseInt(value);
+    }
   
-    dispatch(saveMeeting({ ...meeting, [name]: convertedValue }));
+    dispatch(saveMeeting({ ...meeting, [name]: convertedValue, user_uid: currentUser.uid }));  
   };
   
   // Handle cover photo
@@ -89,7 +94,7 @@ const MeetingForm = () => {
 
           <Form.Group controlId="meetingCoverPhoto">
             <Form.Label>Cover Photo</Form.Label>
-            <Form.Control type="file" name="cover_photo" onChange={handleFileChange} required />
+            <Form.Control type="file" name="cover_photo" onChange={handleFileChange} />
           </Form.Group>
 
           <Form.Group controlId="meetingEventDuration">
@@ -118,6 +123,15 @@ const MeetingForm = () => {
               <option value="3">3 days into the future</option>
               <option value="7">1 week into the future</option>
               <option value="30">1 month into the future</option>
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group controlId="meetingReminderDays">
+            <Form.Label>Email Reminder</Form.Label>
+            <Form.Select name="reminder_days" value={meeting.reminder_days} onChange={handleChange} required>
+              <option value="1">1 day before the meeting</option>
+              <option value="2">2 days before the meeting</option>
+              <option value="3">3 days before the meeting</option>
             </Form.Select>
           </Form.Group>
 

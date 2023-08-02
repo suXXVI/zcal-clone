@@ -27,14 +27,14 @@ export default function AuthPage() {
     // If currentUser is updated and exist, redirect into profile
     useEffect(() => {
         if (currentUser){
-            navigate("/meeting");
+            navigate("/home");
         }
         handleAuthImage();
     },[currentUser, navigate])
     
 
     const handleAuthImage = async() => {
-        let imageRef = ref(storage, `services/auth_picture.png`);
+        let imageRef = ref(storage, `meetings/Login poster.png`);
         let imageURL = await getDownloadURL(imageRef);
         setImageUrl(imageURL)
     }

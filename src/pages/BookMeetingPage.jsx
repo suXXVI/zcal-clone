@@ -13,15 +13,6 @@ export default function BookMeetingPage() {
     const meeting = useSelector(state => state.meeting.meeting);
     const {currentUser} = useContext(AuthContext);
 
-
-    //Log user out
-    useEffect(() => {
-        if(!currentUser){
-        navigate('/login');
-        }
-    },[currentUser])
-
-    console.log(meetingId)
     useEffect(() => {
         dispatch(fetchMeetingById(meetingId));
       }, [dispatch, meetingId]);

@@ -10,6 +10,7 @@ import { Provider } from "react-redux";
 import store from "./store";
 import CreateSuccessPage from "./pages/CreateSuccessPage";
 import BookMeetingPage from "./pages/BookMeetingPage";
+import Home from "./pages/Home";
 
 function Layout(){
   const handleLogout = () => auth.signOut();
@@ -18,7 +19,9 @@ function Layout(){
     <>
       <Navbar bg="light" variant="light" className="mb-3">
         <Container className="justify-content-start gap-4">
-          <Navbar.Brand href="/">Zcal Clone</Navbar.Brand>
+          <Navbar.Brand href="/">
+            <img src="https://firebasestorage.googleapis.com/v0/b/mentor-mentee-booking-system.appspot.com/o/meetings%2Fdownload.png?alt=media&token=d7898c68-1a0d-4ae8-9499-52d128e314fd" style={{width: 80, height: "auto"}}></img>
+          </Navbar.Brand>
           {/* <Nav.Link href="/services">Services</Nav.Link> */}
           {/* {currentUser && (
             <Nav.Link href="/booking">Booking</Nav.Link>
@@ -47,6 +50,7 @@ export default function App() {
                 <Route path="/availability" element={<AvailabilityForm/>} />
                 <Route path="/success/:meetingId" element={<CreateSuccessPage/>} />
                 <Route path="/bookmeeting/:meetingId" element={<BookMeetingPage/>} />
+                <Route path="/home" element={<Home/>} />
               </Route>
           </Routes>
         </BrowserRouter>
