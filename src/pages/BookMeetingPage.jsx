@@ -21,7 +21,7 @@ export default function BookMeetingPage() {
       if (!meeting) {
         return <div>Loading...</div>;
       }
-      console.log(meeting)
+      
       return (
         <Container>
             <div>

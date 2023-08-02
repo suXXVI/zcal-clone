@@ -22,6 +22,8 @@ function AvailabilityForm() {
   // Group the slots by date
   const groupedAvailability = groupBy(availability.flatMap(dateAvailability => dateAvailability.slots.map(slot => ({ ...slot, date: dateAvailability.date }))), 'date');
 
+  console.log(meeting)
+
   //Log user out
   useEffect(() => {
     if(!currentUser){
@@ -34,16 +36,18 @@ function AvailabilityForm() {
     if (meeting && meeting.date_range && meeting.meeting_name) {
       let initialAvailability;
       if (meeting.availability) {
-        // Pre-fill the form with the existing availability data
-        initialAvailability = meeting.availability.map(avail => ({
-          id: avail.id, // add this line
-          date: format(new Date(avail.date), 'yyyy-MM-dd'),
-          slots: [{
-            id: avail.id, // assign the ID to each slot
+        // Group the availability objects by date
+        const groupedAvailability = groupBy(meeting.availability, 'date');
+  
+        // Create a slot for each availability object
+        initialAvailability = Object.entries(groupedAvailability).map(([date, availabilities]) => ({
+          date: format(new Date(date), 'yyyy-MM-dd'),
+          slots: availabilities.map(avail => ({
+            id: avail.id,
             start_time: avail.start_time.substring(0, 5),
             end_time: avail.end_time.substring(0, 5),
             repeats: ''
-          }],
+          })),
         }));
       } else {
         // Initialize the availability data
@@ -56,7 +60,7 @@ function AvailabilityForm() {
           date: format(date, 'yyyy-MM-dd'),
           slots: [
             {
-              id: null, // assign null to the ID of each new slot
+              id: null,
               start_time: isWeekend(date) ? '' : '09:00',
               end_time: isWeekend(date) ? '' : '17:00',
               repeats: ''
@@ -144,11 +148,12 @@ function AvailabilityForm() {
     navigate(-1);
   }
 
-  const handleShowModal = (dateIndex, slotIndex) => {
-    setCurrentSlot({ dateIndex, slotIndex });
+  const handleShowModal = (dateIndex) => {
+    setCurrentSlot({ dateIndex, slots: availability[dateIndex].slots });
     setShowModal(true);
   };
-
+  
+  
   const handleCloseModal = () => {
     setCurrentSlot(null);
     setShowModal(false);
@@ -210,7 +215,7 @@ function AvailabilityForm() {
                 <td>{date}</td>
                 <td>
                   {slots.map((slot, slotIndex) => (
-                    <div key={slotIndex} onClick={() => handleShowModal(dateIndex, slotIndex)}>
+                    <div key={slotIndex} onClick={() => handleShowModal(dateIndex)}>
                       {`${slot.start_time} - ${slot.end_time}`}
                     </div>
                   ))}
@@ -236,7 +241,7 @@ function AvailabilityForm() {
                   <Form.Label>Date</Form.Label>
                   <Form.Control type="date" name="date" value={availability[currentSlot.dateIndex]?.date} disabled />
                 </Form.Group>
-                {availability[currentSlot.dateIndex].slots.map((slot, slotIndex) => (
+                {currentSlot && currentSlot.slots.map((slot, slotIndex) => (
                   <Row key={slotIndex}>
                     <Col>
                       <Form.Group controlId={`startTime${currentSlot.dateIndex}${slotIndex}`}>
@@ -257,7 +262,7 @@ function AvailabilityForm() {
                 ))}
                 <Form.Group controlId={`repeats${currentSlot.dateIndex}`}>
                   <Form.Label>Repeats</Form.Label>
-                  <Form.Control as="select" name="repeats" value={availability[currentSlot.dateIndex]?.slots[currentSlot.slotIndex]?.repeats} onChange={(event) => handleChange(currentSlot.dateIndex, currentSlot.slotIndex, event)}>
+                  <Form.Control as="select" name="repeats" value={availability[currentSlot.dateIndex]?.slots[0]?.repeats} onChange={(event) => handleChange(currentSlot.dateIndex, 0, event)}>
                     <option value="">Select...</option>
                     <option value="only">{`Only on ${format(new Date(availability[currentSlot.dateIndex].date), 'MMMM do')}`}</option>
                     <option value="daily">{`Every ${format(new Date(availability[currentSlot.dateIndex].date), 'EEEE')}`}</option>

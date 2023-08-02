@@ -4,23 +4,23 @@ import { AuthContext } from "../components/AuthProvider";
 import { useNavigate } from "react-router-dom";
 import MeetingDetailsCard from "../components/MeetingDetailsCard";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchMeetingsByUser } from "../features/meetingsSlice";
+import { fetchMeetingsByUser, fetchUser } from "../features/meetingsSlice";
 
 
 export default function Home() {
     const navigate = useNavigate();
     const {currentUser} = useContext(AuthContext);
     const dispatch = useDispatch();
+    const user = useSelector(state => state.meeting.user);
 
     //Log user out
     useEffect(() => {
         if(!currentUser){
          navigate('/login');
-        } 
-    },[currentUser])
-
-    useEffect(() => {
-        dispatch(fetchMeetingsByUser(currentUser.uid));
+        } else {
+            dispatch(fetchMeetingsByUser(currentUser.uid));
+            dispatch(fetchUser(currentUser.uid));
+        }
     },[currentUser])
 
     //Get meeting details from redux store
@@ -36,7 +36,7 @@ export default function Home() {
             <Container>
                 <Row className="my-4 d-flex align-items-center">
                     <Col xs={7}>
-                        <h1>MJ</h1>
+                        <h1>{user && user.userDetails && user.userDetails.name}</h1>
                     </Col>
 
                     <Col xs={5} className="d-flex align-items-center justify-content-end">

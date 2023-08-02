@@ -100,8 +100,6 @@ export const updateMeetingData = createAsyncThunk(
   }
 );
 
-
-
 //Async thunk to fetch meeting ID
 export const fetchMeetingById = createAsyncThunk(
     'meetings/fetchMeetingById',
@@ -138,6 +136,18 @@ export const deleteMeetingById = createAsyncThunk(
   }
 )
 
+//Async thunk to fetch user details
+export const fetchUser = createAsyncThunk(
+  'user/fetchUser',
+  async(userUid, thunkAPI) => {
+    try {
+      const response = await axios.post(`https://capstone-project-api.chungmangjie200.repl.co/api/user`, { userUid });
+      return response.data
+    } catch(error){
+      return thunkAPI.rejectWithValue({ error: error.message });
+    }
+  }
+)
 
 //Synchronous 
 const meetingSlice = createSlice({
@@ -156,7 +166,8 @@ const meetingSlice = createSlice({
       user_uid: '',
     },
     loading: true, // add loading to track request status
-    allMeetings: {},
+    allMeetings: [],
+    user: {}
   },
   reducers: {
     saveMeeting: (state, action) => {
@@ -176,6 +187,9 @@ const meetingSlice = createSlice({
         user_uid: '',
       };
     },
+    clearAllMeetings: (state) => {
+      state.allMeetings = [];
+    }
   },
   //Asynchronous
   extraReducers: (builder) => {
@@ -201,9 +215,13 @@ const meetingSlice = createSlice({
         state.status = 'succeeded';
         // Add any other state changes you need on success
       })
+      .addCase(fetchUser.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+      })
   }
 });
 
-export const { saveMeeting, resetMeeting } = meetingSlice.actions;
+export const { saveMeeting, resetMeeting, clearAllMeetings } = meetingSlice.actions;
 
 export default meetingSlice.reducer;
