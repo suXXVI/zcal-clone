@@ -3,9 +3,10 @@ import { Form, Button, Modal, Table, Container, Col, Row } from 'react-bootstrap
 import { useDispatch, useSelector } from 'react-redux';
 import { resetAvailability, saveAvailability } from '../features/availabilitySlice';
 import { format, eachDayOfInterval, isWeekend } from 'date-fns';
-import { useNavigate } from 'react-router-dom';
-import { postMeetingData, resetMeeting } from '../features/meetingsSlice';
+import { useNavigate, useParams } from 'react-router-dom';
+import { fetchMeetingById, postMeetingData, resetMeeting, updateMeetingData } from '../features/meetingsSlice';
 import { AuthContext } from '../components/AuthProvider';
+import { groupBy } from 'lodash';
 
 function AvailabilityForm() {
   const meeting = useSelector(state => state.meeting.meeting);
@@ -17,6 +18,10 @@ function AvailabilityForm() {
   const [showModal, setShowModal] = useState(false);
   const [currentSlot, setCurrentSlot] = useState(null);
 
+  const {meetingId} = useParams();
+  // Group the slots by date
+  const groupedAvailability = groupBy(availability.flatMap(dateAvailability => dateAvailability.slots.map(slot => ({ ...slot, date: dateAvailability.date }))), 'date');
+
   //Log user out
   useEffect(() => {
     if(!currentUser){
@@ -26,28 +31,45 @@ function AvailabilityForm() {
 
   //Load the date within user specified range
   useEffect(() => {
-    if (meeting.date_range && meeting.meeting_name) {
-      const dates = eachDayOfInterval({
-        start: new Date(),
-        end: new Date(new Date().getTime() + meeting.date_range * 24 * 60 * 60 * 1000)
-      });
-
-      // Initialize availability for each date with one slot
-      const initialAvailability = dates.map(date => ({
-        date: format(date, 'yyyy-MM-dd'),
-        slots: [
-          {
-            start_time: isWeekend(date) ? '' : '09:00',
-            end_time: isWeekend(date) ? '' : '17:00',
+    if (meeting && meeting.date_range && meeting.meeting_name) {
+      let initialAvailability;
+      if (meeting.availability) {
+        // Pre-fill the form with the existing availability data
+        initialAvailability = meeting.availability.map(avail => ({
+          id: avail.id, // add this line
+          date: format(new Date(avail.date), 'yyyy-MM-dd'),
+          slots: [{
+            id: avail.id, // assign the ID to each slot
+            start_time: avail.start_time.substring(0, 5),
+            end_time: avail.end_time.substring(0, 5),
             repeats: ''
-          },
-        ],
-      }));
-
+          }],
+        }));
+      } else {
+        // Initialize the availability data
+        const dates = eachDayOfInterval({
+          start: new Date(),
+          end: new Date(new Date().getTime() + meeting.date_range * 24 * 60 * 60 * 1000)
+        });
+  
+        initialAvailability = dates.map(date => ({
+          date: format(date, 'yyyy-MM-dd'),
+          slots: [
+            {
+              id: null, // assign null to the ID of each new slot
+              start_time: isWeekend(date) ? '' : '09:00',
+              end_time: isWeekend(date) ? '' : '17:00',
+              repeats: ''
+            },
+          ],
+        }));
+      }
+  
       setAvailability(initialAvailability);
     } 
-  }, [meeting.date_range]);
-
+  }, [meeting]);
+  
+  
   const handleTimeChange = (dateIndex, slotIndex) => {
     const newAvailability = [...availability];
     const selectedDay = format(new Date(newAvailability[dateIndex].date), 'EEEE').toLowerCase();
@@ -133,60 +155,74 @@ function AvailabilityForm() {
   };
 
   const handleSubmit = async (event) => {
-  event.preventDefault();
-
-  // Create a deep copy of the availability array
-  const availabilityCopy = JSON.parse(JSON.stringify(availability));
-
-  // Remove the "repeats" field from each slot
-  availabilityCopy.forEach(dateAvailability => {
-    dateAvailability.slots.forEach(slot => {
-      delete slot.repeats;
+    event.preventDefault();
+  
+    // Create a deep copy of the availability array
+    const availabilityCopy = JSON.parse(JSON.stringify(availability));
+  
+    // Remove the "repeats" field from each slot
+    availabilityCopy.forEach(dateAvailability => {
+      dateAvailability.slots.forEach((slot, slotIndex) => {
+        delete slot.repeats;
+      });
     });
-  });
-
-  const meetingData = {
-    meeting: meeting,
-    availability: availabilityCopy
+  
+    const meetingData = {
+      meeting: meeting,
+      availability: availabilityCopy
+    };
+  
+    console.log("meeting data from availability form")
+    console.log(meetingData)
+  
+    if (meetingId) {
+      // Update the existing meeting
+      const response = await dispatch(updateMeetingData({ id: meetingId, meetingData }));
+      if (updateMeetingData.fulfilled.match(response)) {
+        navigate(`/success/${meetingId}`);
+      }
+    } else {
+      // Create a new meeting
+      const response = await dispatch(postMeetingData(meetingData));
+      if (postMeetingData.fulfilled.match(response)) {
+        const meetingId = response.payload.meeting_id; // replace this with the actual ID of the created meeting
+        navigate(`/success/${meetingId}`);
+      }
+    }
   };
-
-  const response = await dispatch(postMeetingData(meetingData));
-  if (postMeetingData.fulfilled.match(response)) {
-    const meetingId = response.payload.meeting_id; // replace this with the actual ID of the created meeting
-    navigate(`/success/${meetingId}`);
-
-  }
-};
+  
+  
+  
 
   return (
     <Container>
         <Form onSubmit={handleSubmit}>
         <Table striped bordered hover>
-            <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Start Time - End Time</th>
-                </tr>
-            </thead>
-            <tbody>
-              {availability.map((dateAvailability, dateIndex) => (
-                <tr key={dateIndex}>
-                  <td>{dateAvailability.date}</td>
-                  <td>
-                    {dateAvailability.slots.map((slot, slotIndex) => (
-                      <div key={slotIndex} onClick={() => handleShowModal(dateIndex, slotIndex)}>
-                        {`${slot.start_time} - ${slot.end_time}`}
-                      </div>
-                    ))}
-                  </td>
-                </tr>
-              ))}
-              {!meeting.meeting_name && (
-                <tr>
-                  <td colSpan={2}>Click back to create a meeting before setting availability timeslot</td>
-                </tr>
-              )}
-            </tbody>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Start Time - End Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.entries(groupedAvailability).map(([date, slots], dateIndex) => (
+              <tr key={dateIndex}>
+                <td>{date}</td>
+                <td>
+                  {slots.map((slot, slotIndex) => (
+                    <div key={slotIndex} onClick={() => handleShowModal(dateIndex, slotIndex)}>
+                      {`${slot.start_time} - ${slot.end_time}`}
+                    </div>
+                  ))}
+                </td>
+              </tr>
+            ))}
+            {!meeting.meeting_name && (
+              <tr>
+                <td colSpan={2}>Click back to create a meeting before setting availability timeslot</td>
+              </tr>
+            )}
+          </tbody>
         </Table>
         
         <Modal show={showModal} onHide={handleCloseModal}>
@@ -194,7 +230,7 @@ function AvailabilityForm() {
             <Modal.Title>Edit Availability</Modal.Title>
           </Modal.Header>
           <Modal.Body>
-            {currentSlot && (
+            {currentSlot && availability[currentSlot.dateIndex] && (
               <>
                 <Form.Group controlId={`date${currentSlot.dateIndex}`}>
                   <Form.Label>Date</Form.Label>

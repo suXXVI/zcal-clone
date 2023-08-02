@@ -50,6 +50,8 @@ export const postMeetingData = createAsyncThunk(
 export const updateMeetingData = createAsyncThunk(
   'meeting/updateMeetingData',
   async ({ id, meetingData }, thunkAPI) => {
+    console.log("async thunk")
+    console.log(meetingData)
     try {
       let imageURL = "";
 
@@ -61,13 +63,23 @@ export const updateMeetingData = createAsyncThunk(
 
       // Flatten the availability data structure and filter out dates without timeslots
       const flattenedAvailability = meetingData.availability.flatMap(date => (
-        date.slots.map(slot => ({
-          date: date.date,
-          start_time: slot.start_time || null, // Set to null if not provided
-          end_time: slot.end_time || null, // Set to null if not provided
-          repeats: slot.repeats,
-        }))
+        date.slots.map((slot, slotIndex) => {
+          const slotData = {
+            date: date.date,
+            start_time: slot.start_time || null, // Set to null if not provided
+            end_time: slot.end_time || null, // Set to null if not provided
+            repeats: slot.repeats,
+          };
+          if (slot.id) {
+            slotData.id = slot.id; // Only include the ID if it exists
+          }
+          return slotData;
+        })
       )).filter(slot => slot.start_time && slot.end_time); // Only include slots with both start_time and end_time
+
+
+      console.log(flattenedAvailability)
+
 
       const response = await axios.put(`https://capstone-project-api.chungmangjie200.repl.co/meetings/${id}`, {
         ...meetingData,

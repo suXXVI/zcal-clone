@@ -46,7 +46,9 @@ export default function App() {
                 <Route index element={<AuthPage/>}/>
                 <Route path="*" element={<AuthPage/>} />
                 <Route path="/login" element={<AuthPage/>} />
+                <Route path="/meeting/:meetingId" element={<MeetingForm/>} />
                 <Route path="/meeting" element={<MeetingForm/>} />
+                <Route path="/availability/:meetingId" element={<AvailabilityForm/>} />
                 <Route path="/availability" element={<AvailabilityForm/>} />
                 <Route path="/success/:meetingId" element={<CreateSuccessPage/>} />
                 <Route path="/bookmeeting/:meetingId" element={<BookMeetingPage/>} />

@@ -68,7 +68,7 @@ export default function Home() {
                     {loading && (
                         <Spinner animation="border" variant="primary" />
                     )}
-                    {!loading && allMeetings.map((meeting) => (
+                    {!loading && allMeetings && allMeetings.map((meeting) => (
                         <MeetingDetailsCard 
                             key={meeting.id}
                             meetingId = {meeting.id}

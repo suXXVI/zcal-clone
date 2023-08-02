@@ -1,9 +1,11 @@
 import { Button, Card, Col } from "react-bootstrap";
 import { useDispatch } from "react-redux";
 import { deleteMeetingById } from "../features/meetingsSlice";
+import { useNavigate } from "react-router-dom";
 
 export default function MeetingDetailsCard({ name, duration, location, link, meetingId }) {
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     const handleCopyLink = async (event) => {
         event.preventDefault();
@@ -17,6 +19,10 @@ export default function MeetingDetailsCard({ name, duration, location, link, mee
 
     const handleDelete = (meetingId) => {
         dispatch(deleteMeetingById(meetingId));
+    }
+
+    const handleNavigateEdit = (meetingId) => {
+      navigate(`/meeting/${meetingId}`)
     }
 
   return (
@@ -39,7 +45,7 @@ export default function MeetingDetailsCard({ name, duration, location, link, mee
             </div>
             <div>
               <Button variant="primary" className="ms-2">
-                <i className="bi bi-pencil-square"></i>
+                <i className="bi bi-pencil-square" onClick={() => handleNavigateEdit(meetingId)}></i>
               </Button>
               <Button variant="danger" className="ms-2">
                 <i className="bi bi-trash" onClick={() => handleDelete(meetingId)}></i>

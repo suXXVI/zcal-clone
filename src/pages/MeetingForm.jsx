@@ -1,8 +1,8 @@
 import { useContext, useEffect, useState } from 'react';
 import { Button, Container, Form, Modal } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { saveMeeting } from '../features/meetingsSlice';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { fetchMeetingById, saveMeeting } from '../features/meetingsSlice';
 import { AuthContext } from '../components/AuthProvider';
 
 const MeetingForm = () => {
@@ -10,6 +10,8 @@ const MeetingForm = () => {
   const {currentUser} = useContext(AuthContext);
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const {meetingId} = useParams();
+
 
   useEffect(() => {
     if(!currentUser){
@@ -17,6 +19,12 @@ const MeetingForm = () => {
     }
   },[currentUser])
 
+  //Edit feature: fetch meeting detaiils
+  useEffect(() => {
+    if (meetingId){
+      dispatch(fetchMeetingById(meetingId))
+    }
+  },[meetingId, dispatch])
 
   const handleChange = (event) => {
     const { name, value } = event.target;
@@ -60,7 +68,11 @@ const MeetingForm = () => {
   //After user clicked "next" button, bring them to continue filling up form
   const handleSubmit = (e) => {
     e.preventDefault();
-    navigate('/availability');
+    if (meetingId){
+      navigate(`/availability/${meetingId}`);
+    } else {
+      navigate('/availability');
+    }
   };
 
   return (
