@@ -5,8 +5,9 @@ import { fetchMeetingById } from "../features/meetingsSlice";
 import { Spinner } from "react-bootstrap";
 import { AuthContext } from "../components/AuthProvider";
 import Button from '@mui/material/Button';
-import { StaticDateTimePicker } from "@mui/x-date-pickers";
+import { DateTimePicker, StaticDateTimePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
+import { TextField } from "@mui/material";
 
 
 
@@ -23,8 +24,12 @@ export default function BookMeetingPage() {
 
     const [allowedDates, setAllowedDates] = useState([]);
     const [allowedTimeSlots, setAllowedTimeSlots] = useState({});
-    
 
+    const [value, setValue] = useState(null);
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+
+    console.log(value)
     useEffect(() => {
       if (meeting && meeting.availability) {
         const dates = meeting.availability.map(avail => dayjs(avail.date));
@@ -48,31 +53,46 @@ export default function BookMeetingPage() {
       }
     }, [meeting]);
     
-  
+    const handleSubmit = (e) => {
+      e.preventDefault();
+      const bookedDate = dayjs(value).format('YYYY-MM-DD');
+      const bookedTime = dayjs(value).format('HH:mm:ss');
+
+      // You can now use the name, email, bookedDate, and bookedTime to perform your desired actions
+      console.log('Name:', name);
+      console.log('Email:', email);
+      console.log('Booked Date:', bookedDate);
+      console.log('Booked Time:', bookedTime);
+
+      // You can navigate or dispatch an action to save the booking
+  };
+
     const shouldDisableDate = (date) => {
       return !allowedDates.some(allowedDate => allowedDate.isSame(date, 'day'));
     };
   
-    const shouldDisableTime = (timeValue, type, date) => {
-      if (!date) return true; // Disable time if date is not defined
+    const shouldDisableTime = (value, view) => {
+      if (!value) return true; // Disable time if value is not defined
     
-      const dateStr = date.format('YYYY-MM-DD');
+      const dateStr = dayjs(value).format('YYYY-MM-DD');
       const timeSlots = allowedTimeSlots[dateStr];
       if (!timeSlots) return true;
     
-      if (type === 'hours') {
-        return !timeSlots.some(slot => parseInt(slot.split(':')[0]) === timeValue);
+      if (view === 'hours') {
+        const hour = dayjs(value).hour();
+        const disableHour = !timeSlots.some(slot => parseInt(slot.split(':')[0]) === hour);
+        return disableHour;
       }
     
-      if (type === 'minutes') {
-        return !timeSlots.some(slot => parseInt(slot.split(':')[1]) === timeValue);
+      if (view === 'minutes') {
+        const minutes = dayjs(value).minute();
+        const disableMinutes = minutes % meeting.event_duration !== 0;
+        return disableMinutes;
       }
     
       return false;
     };
     
-      
-
     return (
       <>
       <style>
@@ -80,12 +100,15 @@ export default function BookMeetingPage() {
           body {
             background-color: #ececec;
           }
+          .MuiDialogActions-root{
+            display: none;
+          }
         `}
       </style>
           {(meeting.length === 0)? (
             <Spinner animation="border" variant="primary" />
           ): (
-            <>
+            <form onSubmit={handleSubmit}>
               <div className="container d-flex justify-content-center align-items-center min-vh-100" style={{maxWidth: '1200px'}}>
                 <div className="row border p-3 bg-white shadow rounded-5 w-100">
                   <div className="profile col-12 col-md-4 col-xl-5 p-3 border">
@@ -111,19 +134,45 @@ export default function BookMeetingPage() {
                     </div>
                   </div>
 
-                    <div className="booking col-md-8 col-xl-7 bg-white p-3">
+                  <div className="booking col-md-8 col-xl-7 bg-white p-3">
+                      <h3 className="mb-3">Book your meeting</h3>
+                      <TextField
+                        label="Name"
+                        variant="outlined"
+                        className="mb-3"
+                        fullWidth
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                      />
+                      <TextField
+                        label="Email"
+                        variant="outlined"
+                        fullWidth
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                      />
                       <StaticDateTimePicker
-                        defaultValue={dayjs('2022-04-17T15:30')}
+                        label="Select Date and Time"
+                        value={value}
+                        onChange={(newValue) => setValue(newValue)}
                         shouldDisableDate={shouldDisableDate}
                         shouldDisableTime={shouldDisableTime}
                       />
-                    </div>
+                      <div className="d-flex justify-content-end">
+                        <Button type="submit" variant="contained" color="primary">
+                          Submit
+                        </Button>
+                      </div>
+                      
                   </div>
                 </div>
-            </>
+              </div>
+            </form>
           )}
       </>
     );
 }
 
 
+ 
