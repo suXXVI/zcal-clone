@@ -13,6 +13,8 @@ import BookMeetingPage from "./pages/BookMeetingPage";
 import Home from "./pages/Home";
 import { clearAllMeetings, resetMeeting } from "./features/meetingsSlice";
 import { resetAvailability } from "./features/availabilitySlice";
+import { LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
 
 function Layout(){
   const {currentUser} = useContext(AuthContext);
@@ -44,25 +46,27 @@ function Layout(){
 
 export default function App() {
   return (
-    <AuthProvider>
-      <Provider store={store}>
-        <BrowserRouter>
-          <Routes>
-              <Route path="/" element={<Layout/>}>
-                <Route index element={<AuthPage/>}/>
-                <Route path="*" element={<AuthPage/>} />
-                <Route path="/login" element={<AuthPage/>} />
-                <Route path="/meeting/:meetingId" element={<MeetingForm/>} />
-                <Route path="/meeting" element={<MeetingForm/>} />
-                <Route path="/availability/:meetingId" element={<AvailabilityForm/>} />
-                <Route path="/availability" element={<AvailabilityForm/>} />
-                <Route path="/success/:meetingId" element={<CreateSuccessPage/>} />
-                <Route path="/bookmeeting/:meetingId" element={<BookMeetingPage/>} />
-                <Route path="/home" element={<Home/>} />
-              </Route>
-          </Routes>
-        </BrowserRouter>
-      </Provider>
-    </AuthProvider>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <AuthProvider>
+        <Provider store={store}>
+          <BrowserRouter>
+            <Routes>
+                <Route path="/" element={<Layout/>}>
+                  <Route index element={<AuthPage/>}/>
+                  <Route path="*" element={<AuthPage/>} />
+                  <Route path="/login" element={<AuthPage/>} />
+                  <Route path="/meeting/:meetingId" element={<MeetingForm/>} />
+                  <Route path="/meeting" element={<MeetingForm/>} />
+                  <Route path="/availability/:meetingId" element={<AvailabilityForm/>} />
+                  <Route path="/availability" element={<AvailabilityForm/>} />
+                  <Route path="/success/:meetingId" element={<CreateSuccessPage/>} />
+                  <Route path="/bookmeeting/:meetingId" element={<BookMeetingPage/>} />
+                  <Route path="/home" element={<Home/>} />
+                </Route>
+            </Routes>
+          </BrowserRouter>
+        </Provider>
+      </AuthProvider>
+    </LocalizationProvider>
   )
 }

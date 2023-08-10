@@ -73,6 +73,25 @@ function AvailabilityForm() {
     } 
   }, [meeting]);
   
+
+  //Generate time slot for availability page
+  const generateTimeOptions = (increment) => {
+    const options = [];
+    for (let i = 0; i < 24; i++) {
+      for (let j = 0; j < 60 / increment; j++) {
+        const hour = i.toString().padStart(2, '0');
+        const minuteValue = (j * increment) % 60;
+        const minute = minuteValue.toString().padStart(2, '0');
+        options.push(`${hour}:${minute}`);
+      }
+    }
+    return options;
+  };
+  
+  
+
+  const timeOptions = generateTimeOptions(meeting.time_slot_increment);
+  
   
   const handleTimeChange = (dateIndex, slotIndex) => {
     const newAvailability = [...availability];
@@ -132,16 +151,30 @@ function AvailabilityForm() {
     setAvailability(newAvailability);
   };
   
-  
+
   const handleChange = (dateIndex, slotIndex, event) => {
     const newAvailability = [...availability];
-    newAvailability[dateIndex].slots[slotIndex][event.target.name] = event.target.value;
-    setAvailability(newAvailability);
+    const slot = newAvailability[dateIndex].slots[slotIndex];
+    const previousValue = slot[event.target.name]; // Store the previous value
+    slot[event.target.name] = event.target.value;
   
-    if (event.target.name === 'start_time' || event.target.name === 'end_time' || event.target.name === 'repeats') {
-      handleTimeChange(dateIndex, slotIndex);
+    if (event.target.name === 'start_time' && slot.end_time) {
+      const startTime = slot.start_time;
+      const endTime = slot.end_time;
+  
+      if (startTime && endTime && startTime >= endTime) {
+        alert(`Start time must be before end time for date index ${dateIndex} and slot index ${slotIndex}`);
+        slot.start_time = previousValue; // Revert to the previous value
+      } else {
+        handleTimeChange(dateIndex, slotIndex);
+      }
     }
+  
+    setAvailability(newAvailability);
   };
+  
+
+  
 
   //Navigate user back to meeting page
   const handleBack = () => {
@@ -196,8 +229,6 @@ function AvailabilityForm() {
     }
   };
   
-  
-  
 
   return (
     <Container>
@@ -246,16 +277,24 @@ function AvailabilityForm() {
                     <Col>
                       <Form.Group controlId={`startTime${currentSlot.dateIndex}${slotIndex}`}>
                         <Form.Label>Start Time</Form.Label>
-                        <Form.Control type="time" name="start_time" value={slot.start_time} onChange={(event) => handleChange(currentSlot.dateIndex, slotIndex, event)} />
+                        <Form.Control as="select" name="start_time" value={slot.start_time} onChange={(event) => handleChange(currentSlot.dateIndex, slotIndex, event)}>
+                          {timeOptions.map((time, index) => (
+                            <option key={index} value={time}>{time}</option>
+                          ))}
+                        </Form.Control>
                       </Form.Group>
                     </Col>
                     <Col>
                       <Form.Group controlId={`endTime${currentSlot.dateIndex}${slotIndex}`}>
                         <Form.Label>End Time</Form.Label>
-                        <Form.Control type="time" name="end_time" value={slot.end_time} onChange={(event) => handleChange(currentSlot.dateIndex, slotIndex, event)} />
+                        <Form.Control as="select" name="end_time" value={slot.end_time} onChange={(event) => handleChange(currentSlot.dateIndex, slotIndex, event)}>
+                          {timeOptions.slice(1).map((time, index) => (
+                            <option key={index} value={time}>{time}</option>
+                          ))}
+                        </Form.Control>
                       </Form.Group>
                     </Col>
-                    <Col xs="auto">
+                    <Col xs="auto" className='d-flex align-items-end'>
                       <Button variant="danger" onClick={() => deleteSlotInModal(slotIndex)}>Delete</Button>
                     </Col>
                   </Row>
@@ -263,7 +302,6 @@ function AvailabilityForm() {
                 <Form.Group controlId={`repeats${currentSlot.dateIndex}`}>
                   <Form.Label>Repeats</Form.Label>
                   <Form.Control as="select" name="repeats" value={availability[currentSlot.dateIndex]?.slots[0]?.repeats} onChange={(event) => handleChange(currentSlot.dateIndex, 0, event)}>
-                    <option value="">Select...</option>
                     <option value="only">{`Only on ${format(new Date(availability[currentSlot.dateIndex].date), 'MMMM do')}`}</option>
                     <option value="daily">{`Every ${format(new Date(availability[currentSlot.dateIndex].date), 'EEEE')}`}</option>
                     <option value="weekdays">All weekdays</option>

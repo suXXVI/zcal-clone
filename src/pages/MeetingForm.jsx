@@ -1,5 +1,5 @@
 import { useContext, useEffect, useState } from 'react';
-import { Button, Container, Form, Modal } from 'react-bootstrap';
+import { Button, Container, Form, Modal, Spinner } from 'react-bootstrap';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { fetchMeetingById, saveMeeting } from '../features/meetingsSlice';
@@ -79,7 +79,7 @@ const MeetingForm = () => {
     <>
       <Container>
         <h1 className='mb-4'>Create a meeting invite link!</h1>
-        <Form onSubmit={handleSubmit}>
+          <Form onSubmit={handleSubmit}>
           <Form.Group controlId="meetingName">
             <Form.Label>Meeting Name</Form.Label>
             <Form.Control type="text" name="meeting_name" value={meeting.meeting_name} onChange={handleChange} required/>
