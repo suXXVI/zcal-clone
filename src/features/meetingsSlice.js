@@ -149,6 +149,36 @@ export const fetchUser = createAsyncThunk(
   }
 )
 
+//Async thunk to create a guest meeting
+export const createGuestMeeting = createAsyncThunk(
+  'guest/createGuestMeeting',
+  async({guestMeetingData}) => {
+    try{
+      const response = await axios.post(`https://capstone-project-api.chungmangjie200.repl.co/guestmeeting`, guestMeetingData );
+      return response.data
+    } catch(error){
+      console.log(error)
+
+    }
+  }
+)
+
+//Async thunk to fetch guest meeting
+export const fetchGuestMeeting = createAsyncThunk(
+  'guest/fetchGuestMeeting',
+  async (meetingId) => {
+    try {
+      const response = await axios.get(`https://capstone-project-api.chungmangjie200.repl.co/fetchguestmeeting/${meetingId}`);
+      console.log(response.data)
+      return response.data;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+);
+
+
 //Synchronous 
 const meetingSlice = createSlice({
   name: 'meeting',
@@ -167,7 +197,8 @@ const meetingSlice = createSlice({
     },
     loading: true, // add loading to track request status
     allMeetings: [],
-    user: {}
+    user: {},
+    guestMeeting: [],
   },
   reducers: {
     saveMeeting: (state, action) => {
@@ -219,6 +250,12 @@ const meetingSlice = createSlice({
         state.loading = false;
         state.user = action.payload;
       })
+      .addCase(createGuestMeeting.fulfilled, (state,action) => {
+        state.status = 'succeeded';
+      })
+      .addCase(fetchGuestMeeting.fulfilled, (state, action) => {
+        state.guestMeeting = action.payload;
+      });
   }
 });
 

@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { fetchMeetingById } from "../features/meetingsSlice";
+import { createGuestMeeting, fetchGuestMeeting, fetchMeetingById } from "../features/meetingsSlice";
 import { Spinner } from "react-bootstrap";
 import { AuthContext } from "../components/AuthProvider";
 import Button from '@mui/material/Button';
@@ -17,6 +17,17 @@ export default function BookMeetingPage() {
     const navigate = useNavigate();
     const meeting = useSelector(state => state.meeting.meeting);
     const {currentUser} = useContext(AuthContext);
+    const [submitting, setSubmitting] = useState(false); // Add this state to track submission status
+    const guestMeeting = useSelector(state => state.meeting.guestMeeting)
+    const [formSubmitted, setFormSubmitted] = useState(false);
+
+    console.log(meeting)
+    console.log(guestMeeting)
+
+    // Dispatch fetchGuestMeeting when the component mounts
+    useEffect(() => {
+        dispatch(fetchGuestMeeting(meetingId));
+    }, [dispatch, meetingId]);
 
     useEffect(() => {
         dispatch(fetchMeetingById(meetingId));
@@ -29,47 +40,81 @@ export default function BookMeetingPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
 
-    console.log(value)
     useEffect(() => {
-      if (meeting && meeting.availability) {
-        const dates = meeting.availability.map(avail => dayjs(avail.date));
-    
-        const timeSlots = meeting.availability.reduce((slots, avail) => {
+      if (meeting && meeting.availability && guestMeeting) {
+        const dates = [];
+        const timeSlots = {};
+  
+        meeting.availability.forEach((avail) => {
           const date = dayjs(avail.date).format('YYYY-MM-DD');
           const startTime = dayjs(avail.start_time, 'HH:mm:ss');
           const endTime = dayjs(avail.end_time, 'HH:mm:ss');
-          const timeSlots = [];
-    
-          for (let time = startTime; time.isBefore(endTime); time = time.add(meeting.event_duration, 'minutes')) {
-            timeSlots.push(time.format('HH:mm'));
+  
+          // Exclude dates and times that were already booked
+          if (guestMeeting.some(gm => gm.booked_date === date)) {
+            return;
           }
-    
-          slots[date] = timeSlots;
-          return slots;
-        }, {});
-    
+  
+          if (!dates.includes(date)) {
+            dates.push(date);
+          }
+  
+          if (!timeSlots[date]) {
+            timeSlots[date] = [];
+          }
+  
+          for (let time = startTime; time.isBefore(endTime); time = time.add(meeting.event_duration, 'minutes')) {
+            const formattedTime = time.format('HH:mm');
+            if (!guestMeeting.some(gm => gm.booked_date === date && gm.booked_time === formattedTime)) {
+              timeSlots[date].push(formattedTime);
+            }
+          }
+        });
+  
         setAllowedDates(dates);
         setAllowedTimeSlots(timeSlots);
       }
-    }, [meeting]);
+    }, [meeting, guestMeeting]);
     
-    const handleSubmit = (e) => {
+    
+    const handleSubmit = async (e) => {
       e.preventDefault();
+  
+      if (!value) {
+        alert('Please select a date and time.');
+        return;
+      }
+  
       const bookedDate = dayjs(value).format('YYYY-MM-DD');
       const bookedTime = dayjs(value).format('HH:mm:ss');
-
-      // You can now use the name, email, bookedDate, and bookedTime to perform your desired actions
-      console.log('Name:', name);
-      console.log('Email:', email);
-      console.log('Booked Date:', bookedDate);
-      console.log('Booked Time:', bookedTime);
-
-      // You can navigate or dispatch an action to save the booking
-  };
+  
+      const guestMeetingData = {
+        meetingId,
+        name,
+        email,
+        booked_date: bookedDate,
+        booked_time: bookedTime,
+      };
+  
+      setSubmitting(true); // Set submitting to true to disable the button and change the text
+  
+      try {
+        await dispatch(createGuestMeeting({ guestMeetingData })); // Dispatch the action
+        alert("Booked successfully! Email sending feature coming soon!")
+        setFormSubmitted(true)
+      } catch (error) {
+        console.error(error);
+        // Handle the error as needed
+      } finally {
+        setSubmitting(false); // Set submitting to false to re-enable the button
+      }
+    };
 
     const shouldDisableDate = (date) => {
-      return !allowedDates.some(allowedDate => allowedDate.isSame(date, 'day'));
+      const formattedDate = dayjs(date).format('YYYY-MM-DD');
+      return !allowedDates.includes(formattedDate);
     };
+  
   
     const shouldDisableTime = (value, view) => {
       if (!value) return true; // Disable time if value is not defined
@@ -143,6 +188,7 @@ export default function BookMeetingPage() {
                         fullWidth
                         value={name}
                         onChange={(e) => setName(e.target.value)}
+                        required
                       />
                       <TextField
                         label="Email"
@@ -151,6 +197,7 @@ export default function BookMeetingPage() {
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
+                        required
                       />
                       <StaticDateTimePicker
                         label="Select Date and Time"
@@ -160,11 +207,15 @@ export default function BookMeetingPage() {
                         shouldDisableTime={shouldDisableTime}
                       />
                       <div className="d-flex justify-content-end">
-                        <Button type="submit" variant="contained" color="primary">
-                          Submit
+                        <Button
+                          type="submit"
+                          variant="contained"
+                          color="primary"
+                          disabled={submitting} 
+                        >
+                          {submitting ? 'Submitting...' : 'Submit'} 
                         </Button>
                       </div>
-                      
                   </div>
                 </div>
               </div>
