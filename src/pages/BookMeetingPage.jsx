@@ -5,9 +5,9 @@ import { createGuestMeeting, fetchGuestMeeting, fetchMeetingById } from "../feat
 import { Spinner } from "react-bootstrap";
 import { AuthContext } from "../components/AuthProvider";
 import Button from '@mui/material/Button';
-import { DateTimePicker, StaticDateTimePicker } from "@mui/x-date-pickers";
+import { DatePicker, DateTimePicker, StaticDateTimePicker, TimePicker } from "@mui/x-date-pickers";
 import dayjs from "dayjs";
-import { TextField } from "@mui/material";
+import { Chip, InputBase, Paper, TextField } from "@mui/material";
 
 
 
@@ -21,7 +21,6 @@ export default function BookMeetingPage() {
     const guestMeeting = useSelector(state => state.meeting.guestMeeting)
     const [formSubmitted, setFormSubmitted] = useState(false);
 
-    console.log(meeting)
     console.log(guestMeeting)
 
     // Dispatch fetchGuestMeeting when the component mounts
@@ -42,35 +41,44 @@ export default function BookMeetingPage() {
 
     useEffect(() => {
       if (meeting && meeting.availability && guestMeeting) {
+        console.log('Guest Meeting Data:', guestMeeting);
         const dates = [];
         const timeSlots = {};
-  
+    
         meeting.availability.forEach((avail) => {
           const date = dayjs(avail.date).format('YYYY-MM-DD');
           const startTime = dayjs(avail.start_time, 'HH:mm:ss');
           const endTime = dayjs(avail.end_time, 'HH:mm:ss');
-  
-          // Exclude dates and times that were already booked
-          if (guestMeeting.some(gm => gm.booked_date === date)) {
-            return;
-          }
-  
+    
           if (!dates.includes(date)) {
             dates.push(date);
           }
-  
+    
           if (!timeSlots[date]) {
             timeSlots[date] = [];
           }
-  
+    
           for (let time = startTime; time.isBefore(endTime); time = time.add(meeting.event_duration, 'minutes')) {
             const formattedTime = time.format('HH:mm');
-            if (!guestMeeting.some(gm => gm.booked_date === date && gm.booked_time === formattedTime)) {
-              timeSlots[date].push(formattedTime);
-            }
+            timeSlots[date].push(formattedTime);
           }
+    
+          // Filter out booked time slots for this date
+          const bookedTimes = guestMeeting
+            .filter(gm => dayjs(gm.booked_date).format('YYYY-MM-DD') === date)
+            .map(gm => gm.booked_time.slice(0, 5)); // Extracting 'HH:mm' part
+            console.log('Booked Times for date', date, ':', bookedTimes);
+          
+            // Before filtering
+            console.log('Time Slots before filtering for date', date, ':', timeSlots[date]);
+
+            timeSlots[date] = timeSlots[date].filter(time => !bookedTimes.includes(time));
+
+            // After filtering
+            console.log('Time Slots after filtering for date', date, ':', timeSlots[date]);
+
         });
-  
+    
         setAllowedDates(dates);
         setAllowedTimeSlots(timeSlots);
       }
@@ -79,29 +87,31 @@ export default function BookMeetingPage() {
     
     const handleSubmit = async (e) => {
       e.preventDefault();
-  
+    
       if (!value) {
         alert('Please select a date and time.');
         return;
       }
-  
+      console.log(value);
       const bookedDate = dayjs(value).format('YYYY-MM-DD');
       const bookedTime = dayjs(value).format('HH:mm:ss');
-  
+    
       const guestMeetingData = {
         meetingId,
         name,
         email,
         booked_date: bookedDate,
         booked_time: bookedTime,
+        guestEmails: emails.join(', '), // Add the emails array as a comma-separated string
       };
-  
+    
       setSubmitting(true); // Set submitting to true to disable the button and change the text
-  
+    
       try {
         await dispatch(createGuestMeeting({ guestMeetingData })); // Dispatch the action
-        alert("Booked successfully! Email sending feature coming soon!")
-        setFormSubmitted(true)
+        alert("Booked successfully! Email sending feature coming soon!");
+        setFormSubmitted(true);
+        window.location.reload();
       } catch (error) {
         console.error(error);
         // Handle the error as needed
@@ -109,6 +119,7 @@ export default function BookMeetingPage() {
         setSubmitting(false); // Set submitting to false to re-enable the button
       }
     };
+    
 
     const shouldDisableDate = (date) => {
       const formattedDate = dayjs(date).format('YYYY-MM-DD');
@@ -130,13 +141,52 @@ export default function BookMeetingPage() {
       }
     
       if (view === 'minutes') {
-        const minutes = dayjs(value).minute();
-        const disableMinutes = minutes % meeting.event_duration !== 0;
-        return disableMinutes;
+        const timeStr = dayjs(value).format('HH:mm');
+        const isDisabled = !timeSlots.includes(timeStr);
+        if (isDisabled) {
+          console.log(`Time slot ${timeStr} on date ${dateStr} is disabled.`);
+        }
+        return isDisabled;
       }
     
       return false;
     };
+
+    //Email
+    const [emails, setEmails] = useState([]);
+    const [inputValue, setInputValue] = useState('');
+  
+    const handleInputChange = (e) => {
+      setInputValue(e.target.value);
+    };
+  
+    const handleAddEmail = () => {
+      if (inputValue.trim() === '') return; // Return early if the input is empty
+    
+      const email = inputValue.trim();
+      const isValidEmail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+      if (isValidEmail) {
+        setEmails([...emails, email]);
+        setInputValue('');
+      } else {
+        alert('Please enter a valid email address.');
+      }
+    };
+
+    const handleKeyDown = (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleAddEmail();
+      }
+    };
+  
+    const handleRemoveEmail = (index) => {
+      setEmails(emails.filter((_, i) => i !== index));
+    };
+
+    const [selectedDate, setSelectedDate] = useState(null);
+    const [timePickerEnabled, setTimePickerEnabled] = useState(false);
+
     
     return (
       <>
@@ -193,23 +243,82 @@ export default function BookMeetingPage() {
                       <TextField
                         label="Email"
                         variant="outlined"
+                        className="mb-3"
                         fullWidth
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
                       />
-                      <StaticDateTimePicker
-                        label="Select Date and Time"
-                        value={value}
-                        onChange={(newValue) => setValue(newValue)}
-                        shouldDisableDate={shouldDisableDate}
-                        shouldDisableTime={shouldDisableTime}
-                      />
+                       <div style={{ position: 'relative', marginBottom: '20px' }}>
+                        <TextField
+                          label="Enter guest email (optional)"
+                          variant="outlined"
+                          fullWidth
+                          type="text"
+                          value={inputValue}
+                          onChange={handleInputChange}
+                          onKeyDown={handleKeyDown}
+                          onBlur={handleAddEmail} // Add this line
+                        />
+                        {emails.length > 0 && (
+                          <Paper
+                            variant="outlined"
+                            style={{
+                              display: 'flex',
+                              flexWrap: 'nowrap',
+                              overflowX: 'auto',
+                              padding: '5px',
+                              alignItems: 'center',
+                              position: 'absolute',
+                              top: '56px',
+                              width: '100%',
+                            }}
+                          >
+                            {emails.map((email, index) => (
+                              <Chip
+                                key={index}
+                                label={email}
+                                onDelete={() => handleRemoveEmail(index)}
+                                style={{ margin: '5px' }}
+                              />
+                            ))}
+                            <InputBase style={{ minWidth: '100px' }} placeholder="Add more emails..." />
+                          </Paper>
+                        )}
+                      </div>
+
+                      <p className="ms-1 mb-3">Select your preferred date:</p>
+                      <div className="w-100 d-flex justify-content-between">
+                          <DatePicker
+                          label="Select Date"
+                          value={selectedDate}
+                          className="me-3 w-100"
+                          onChange={(newValue) => {
+                            setSelectedDate(newValue);
+                            setTimePickerEnabled(true); // Enable time picker once a date is selected
+                          }}
+                          shouldDisableDate={shouldDisableDate}
+                        />
+
+                        {timePickerEnabled && (
+                          <TimePicker
+                            label="Select Time"
+                            value={value}
+                            className="w-100"
+                            onChange={(newValue) => setValue(newValue)}
+                            shouldDisableTime={shouldDisableTime}
+                          />
+                        )}
+                      </div>
+                     
+
+
                       <div className="d-flex justify-content-end">
                         <Button
                           type="submit"
                           variant="contained"
+                          className="mt-3"
                           color="primary"
                           disabled={submitting} 
                         >
@@ -219,6 +328,8 @@ export default function BookMeetingPage() {
                   </div>
                 </div>
               </div>
+
+             
             </form>
           )}
       </>
