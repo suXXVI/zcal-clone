@@ -27,8 +27,6 @@ export default function Home() {
     const allMeetings = useSelector(state => state.meeting.allMeetings);
     const loading = useSelector(state => state.meeting.loading)
 
-    console.log(allMeetings)
-
     const handleCreateMeeting = () => {
         navigate('/meeting')
     }
@@ -70,7 +68,7 @@ export default function Home() {
                     {loading && (
                         <Spinner animation="border" variant="primary" />
                     )}
-                    {!loading && allMeetings.length !== 0 && allMeetings.map((meeting) => (
+                    {!loading && allMeetings && allMeetings.map((meeting) => (
                         <MeetingDetailsCard 
                             key={meeting.id}
                             meetingId = {meeting.id}

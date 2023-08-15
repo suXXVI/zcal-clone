@@ -100,7 +100,7 @@ export const updateMeetingData = createAsyncThunk(
   }
 );
 
-//Async thunk to fetch meeting ID
+//Async thunk to fetch meeting by ID
 export const fetchMeetingById = createAsyncThunk(
     'meetings/fetchMeetingById',
     async(meetingId) => {
@@ -167,6 +167,7 @@ export const createGuestMeeting = createAsyncThunk(
 export const fetchGuestMeeting = createAsyncThunk(
   'guest/fetchGuestMeeting',
   async (meetingId) => {
+    console.log("slice: ", meetingId)
     try {
       const response = await axios.get(`https://capstone-project-api.chungmangjie200.repl.co/fetchguestmeeting/${meetingId}`);
       console.log(response.data)
