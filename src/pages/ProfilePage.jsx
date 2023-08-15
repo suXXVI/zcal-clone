@@ -9,6 +9,7 @@ import defaultPic from '../assets/default-pic.png';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase';
 import { updateUserInfo } from '../features/meetingsSlice';
+import useLocalStorage from 'use-local-storage';
 
 export default function ProfilePage() {
   const { currentUser } = useContext(AuthContext);
@@ -47,11 +48,12 @@ export default function ProfilePage() {
     try {
       if (imgToUpload === null) {
         const url = user.userDetails.profile_picture;
+        // Dispatch data to update user info in users table
         await dispatch(
           updateUserInfo({
             id: user.userDetails.id,
             name: newName,
-            profile_picture: url, // Using the URL obtained from Firebase Storage
+            profile_picture: url, // Using previous picture
           })
         );
       } else {
@@ -124,7 +126,9 @@ export default function ProfilePage() {
         <div className='d-flex flex-row gap-2'>
           {editing ? (
             <>
-              <Button onClick={handleUploadAndSubmit}>Save</Button>
+              <Button onClick={handleUploadAndSubmit}>
+                {isLoading ? '...' : 'Save'}
+              </Button>
               <Button onClick={handleCancel}>Cancel</Button>
             </>
           ) : (

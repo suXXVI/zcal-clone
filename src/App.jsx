@@ -9,7 +9,7 @@ import { AuthContext, AuthProvider } from './components/AuthProvider';
 import AuthPage from './pages/AuthPage';
 import { auth } from './firebase';
 import { useContext } from 'react';
-import { Button, Container, Nav, Navbar } from 'react-bootstrap';
+import { Container, Navbar, Dropdown } from 'react-bootstrap';
 import AvailabilityForm from './pages/AvailabilityForm';
 import MeetingForm from './pages/MeetingForm';
 import { Provider, useDispatch } from 'react-redux';
@@ -22,9 +22,16 @@ import { resetAvailability } from './features/availabilitySlice';
 import { LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import ProfilePage from './pages/ProfilePage';
+import { Link } from 'react-router-dom';
+import { useSelector } from 'react-redux/es/hooks/useSelector';
 
 function Layout() {
   const { currentUser } = useContext(AuthContext);
+  const user = useSelector((state) => state.meeting.user);
+  const icon = user.userDetails?.profile_picture;
+
+  const iconCleaned = icon?.replace(/["\\]/g, '');
+
   const location = useLocation();
   const dispatch = useDispatch();
   const handleLogout = () => {
@@ -45,9 +52,28 @@ function Layout() {
             ></img>
           </Navbar.Brand>
           {currentUser && !location.pathname.startsWith('/bookmeeting') && (
-            <Button variant='danger' onClick={handleLogout}>
-              Logout
-            </Button>
+            <Dropdown>
+              <Dropdown.Toggle variant='light' id='dropdown-basic'>
+                <img src={iconCleaned} width={35} className='rounded-circle' />
+              </Dropdown.Toggle>
+
+              <Dropdown.Menu>
+                <Dropdown.Item>
+                  <Link
+                    to='/profile'
+                    className='text-decoration-none text-black'
+                  >
+                    Profile
+                  </Link>
+                </Dropdown.Item>
+                <Dropdown.Item>
+                  <Link to='/home' className='text-decoration-none text-black'>
+                    Home
+                  </Link>
+                </Dropdown.Item>
+                <Dropdown.Item onClick={handleLogout}>Log Out</Dropdown.Item>
+              </Dropdown.Menu>
+            </Dropdown>
           )}
         </Container>
       </Navbar>
