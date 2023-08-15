@@ -179,6 +179,30 @@ export const fetchGuestMeeting = createAsyncThunk(
   }
 );
 
+export const sendEmail = createAsyncThunk(
+  'guest/sendEmail',
+  async ({to, subject, html}, thunkAPI) => {
+    console.log(to)
+    console.log(subject)
+    console.log(html)
+
+    try {
+      const response = await axios.post(`https://capstone-project-api.chungmangjie200.repl.co/sendemail`, {to, subject, html});
+      
+      if (response.status !== 200) {
+        // You can customize the error message based on the response if needed
+        return thunkAPI.rejectWithValue('Failed to send email');
+      }
+
+      return response.data;
+    } catch (error) {
+      // Log the error and reject it to propagate it to the calling code
+      console.log(error);
+      return thunkAPI.rejectWithValue(error.response?.data || 'An error occurred while sending the email');
+    }
+  }
+);
+
 
 //Synchronous 
 const meetingSlice = createSlice({

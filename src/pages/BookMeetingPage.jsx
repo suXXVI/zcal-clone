@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
-import { createGuestMeeting, fetchGuestMeeting, fetchMeetingById } from "../features/meetingsSlice";
+import { createGuestMeeting, fetchGuestMeeting, fetchMeetingById, sendEmail } from "../features/meetingsSlice";
 import { Spinner } from "react-bootstrap";
 import { AuthContext } from "../components/AuthProvider";
 import Button from '@mui/material/Button';
@@ -21,8 +21,7 @@ export default function BookMeetingPage() {
     const guestMeeting = useSelector(state => state.meeting.guestMeeting)
     const [formSubmitted, setFormSubmitted] = useState(false);
 
-    console.log(guestMeeting)
-
+    console.log(meeting)
     // Dispatch fetchGuestMeeting when the component mounts
     useEffect(() => {
         dispatch(fetchGuestMeeting(meetingId));
@@ -96,28 +95,56 @@ export default function BookMeetingPage() {
       const bookedDate = dayjs(value).format('YYYY-MM-DD');
       const bookedTime = dayjs(value).format('HH:mm:ss');
     
+      // Combine the main email with the guest emails
+      const guestEmails = [email, ...emails].join(', ');
+
       const guestMeetingData = {
         meetingId,
         name,
         email,
         booked_date: bookedDate,
         booked_time: bookedTime,
-        guestEmails: emails.join(', '), // Add the emails array as a comma-separated string
+        guestEmails: guestEmails
       };
     
+      //Email content
+      const durationString = meeting.event_duration <= 60 ? `${meeting.event_duration} min` : `${meeting.event_duration / 60} hour(s)`;
+      const subject = `Appointment Confirmation - ${meeting.meeting_name}`;
+      const content = `
+        <html>
+          <body>
+            <p>Hello from zCal Clone! This is a confirmation email for your appointment with details as follows:</p>
+            <p>Booking name: ${name}</p>
+            <p>Attendees: ${guestEmails}</p>
+            <p>Booked Date: ${bookedDate}</p>
+            <p>Booked Time: ${bookedTime}</p>
+            <p>Duration: ${durationString}</p>
+            <p>Location: ${meeting.location}</p>
+            <p>Meeting URL: ${meeting.custom_url}</p>
+            <br>
+            <p>Looking forward to see you!</p>
+            <br>
+            <p>Regards,<br>${meeting.user_name}</p>
+          </body>
+        </html>
+      `;
+
+
       setSubmitting(true); // Set submitting to true to disable the button and change the text
     
       try {
         await dispatch(createGuestMeeting({ guestMeetingData })); // Dispatch the action
-        alert("Booked successfully! Email sending feature coming soon!");
+        await dispatch(sendEmail({to:guestEmails, subject, html:content})); // Notice the change to html
+      
+        alert("Booked successfully! Confirmation email has been sent!");
         setFormSubmitted(true);
-        window.location.reload();
       } catch (error) {
         console.error(error);
-        // Handle the error as needed
+        alert("There was an error booking the meeting or sending the email. Please try again.");
       } finally {
         setSubmitting(false); // Set submitting to false to re-enable the button
       }
+      
     };
     
 
