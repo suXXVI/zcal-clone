@@ -43,24 +43,38 @@ export default function ProfilePage() {
   // upload pic to firebase storaage and get link
   const handleUploadAndSubmit = async () => {
     setIsLoading(true);
+    console.log(imgToUpload);
     try {
-      const imageRef = ref(storage, `meetings/${currentUser.uid}`);
-      await uploadBytes(imageRef, imgToUpload);
-      const url = await getDownloadURL(imageRef);
-      console.log('pic uploaded!');
+      if (imgToUpload === null) {
+        const url = user.userDetails.profile_picture;
+        await dispatch(
+          updateUserInfo({
+            id: user.userDetails.id,
+            name: newName,
+            profile_picture: url, // Using the URL obtained from Firebase Storage
+          })
+        );
+      } else {
+        const imageRef = ref(storage, `meetings/${currentUser.uid}`);
+        await uploadBytes(imageRef, imgToUpload);
+        const url = await getDownloadURL(imageRef);
+        console.log('pic uploaded!');
 
-      // Dispatch data to update user info in users table
-      dispatch(
-        updateUserInfo({
-          id: user.userDetails.id,
-          name: newName,
-          profile_picture: url, // Using the URL obtained from Firebase Storage
-        })
-      );
+        // Dispatch data to update user info in users table
+        await dispatch(
+          updateUserInfo({
+            id: user.userDetails.id,
+            name: newName,
+            profile_picture: url, // Using the URL obtained from Firebase Storage
+          })
+        );
+      }
 
       setEditing(false);
       setIsLoading(false);
-      dispatch(fetchUser(currentUser.uid));
+      window.location.reload(true);
+      await dispatch(fetchUser(currentUser.uid));
+      window.location.reload(false);
     } catch (error) {
       console.error(error.message);
     }
