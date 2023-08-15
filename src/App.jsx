@@ -37,7 +37,7 @@ function Layout() {
   return (
     <>
       <Navbar bg='light' variant='light' className='mb-3'>
-        <Container className='justify-content-start gap-4'>
+        <Container className='justify-content-between gap-4'>
           <Navbar.Brand href='/'>
             <img
               src='https://firebasestorage.googleapis.com/v0/b/mentor-mentee-booking-system.appspot.com/o/meetings%2Fdownload.png?alt=media&token=d7898c68-1a0d-4ae8-9499-52d128e314fd'
