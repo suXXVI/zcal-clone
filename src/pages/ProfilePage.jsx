@@ -79,7 +79,7 @@ export default function ProfilePage() {
           <img
             className='rounded-circle'
             style={{ width: 200, height: 200 }}
-            src={user.userDetails.profile_picture || defaultPic}
+            src={user.userDetails?.profile_picture || defaultPic}
             alt='User Profile'
           />
           {editing && (
@@ -101,10 +101,10 @@ export default function ProfilePage() {
                 placeholder='Enter new username'
               />
             ) : (
-              user.userDetails.name
+              user.userDetails?.name || 'Loading...'
             )}
           </h2>
-          <p>{user.userDetails.email}</p>
+          <p>{user.userDetails?.email || 'Loading...'}</p>
         </div>
         {/* buttons */}
         <div className='d-flex flex-row gap-2'>
