@@ -41,7 +41,7 @@ export default function Home() {
   const loading = useSelector((state) => state.meeting.loading);
 
   const handleCreateMeeting = () => {
-    navigate('/profile');
+    navigate('/meeting');
   };
 
   return (

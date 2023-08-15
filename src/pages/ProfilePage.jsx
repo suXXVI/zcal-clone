@@ -91,6 +91,7 @@ export default function ProfilePage() {
       <Col className='d-flex flex-column align-items-center mt-5'>
         {' '}
         {/* profile pic */}
+        <h1 className='mb-5'>Your Profile</h1>
         <div className='d-flex flex-column align-items-center gap-4 mb-4'>
           <img
             className='rounded-circle'
@@ -120,7 +121,9 @@ export default function ProfilePage() {
               user.userDetails?.name || 'Loading...'
             )}
           </h2>
-          <p>{user.userDetails?.email || 'Loading...'}</p>
+          <p className='text-secondary'>
+            {user.userDetails?.email || 'Loading...'}
+          </p>
         </div>
         {/* buttons */}
         <div className='d-flex flex-row gap-2'>
